@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: '/api',
-} as const;
+  apiUrl: 'https://travel-insurance-quotation.onrender.com/api',
+};
