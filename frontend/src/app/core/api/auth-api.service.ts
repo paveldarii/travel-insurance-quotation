@@ -20,8 +20,4 @@ export class AuthApiService {
   register(request: RegisterRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.baseUrl}/register`, request);
   }
-
-  me(): Observable<AuthResponse> {
-    return this.http.get<AuthResponse>(`${this.baseUrl}/me`);
-  }
 }

@@ -51,8 +51,27 @@ export interface QuotationSummary {
   readonly travelers_count: number;
 }
 
+export interface PaginationLinks {
+  readonly first: string | null;
+  readonly last: string | null;
+  readonly prev: string | null;
+  readonly next: string | null;
+}
+
+export interface PaginationMeta {
+  readonly current_page: number;
+  readonly from: number | null;
+  readonly last_page: number;
+  readonly path: string;
+  readonly per_page: number;
+  readonly to: number | null;
+  readonly total: number;
+}
+
 export interface QuotationListResponse {
   readonly data: readonly QuotationSummary[];
+  readonly links: PaginationLinks;
+  readonly meta: PaginationMeta;
 }
 
 export interface ApiValidationError {

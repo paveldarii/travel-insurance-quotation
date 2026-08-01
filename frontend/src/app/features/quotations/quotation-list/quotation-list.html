@@ -1,1 +1,155 @@
-<p>quotation-list works!</p>
+<section class="page">
+  <header class="page-header">
+    <div>
+      <p class="page-header__eyebrow">Quotation history</p>
+
+      <h1>My quotations</h1>
+
+      <p class="page-header__description">
+        Review your previous travel insurance quotations or start a new one.
+      </p>
+    </div>
+
+    <a class="primary-button" routerLink="/quotes/new">
+      <span aria-hidden="true">+</span>
+      New quotation
+    </a>
+  </header>
+
+  @if (errorMessage()) {
+    <section class="state-card state-card--error" role="alert">
+      <div class="state-card__icon" aria-hidden="true">!</div>
+
+      <div>
+        <h2>Unable to load quotations</h2>
+        <p>{{ errorMessage() }}</p>
+      </div>
+
+      <button type="button" class="retry-button" (click)="loadQuotations()">Try again</button>
+    </section>
+  } @else if (isLoading() && quotations().length === 0) {
+    <section class="quotation-list" aria-label="Loading quotations" aria-busy="true">
+      @for (item of [1, 2, 3]; track item) {
+        <article class="quotation-card quotation-card--loading">
+          <div class="skeleton skeleton--title"></div>
+          <div class="skeleton skeleton--amount"></div>
+          <div class="skeleton skeleton--line"></div>
+          <div class="skeleton skeleton--line-short"></div>
+        </article>
+      }
+    </section>
+  } @else if (quotations().length === 0) {
+    <section class="empty-state">
+      <div class="empty-state__illustration" aria-hidden="true">
+        <span>✦</span>
+      </div>
+
+      <h2>No quotations yet</h2>
+
+      <p>Create your first quotation by adding your trip dates, currency, and travelers.</p>
+
+      <a class="primary-button" routerLink="/quotes/new"> Create my first quotation </a>
+    </section>
+  } @else {
+    <div class="list-summary">
+      <p>
+        <strong>
+          {{ pagination()?.total ?? quotations().length }}
+        </strong>
+
+        {{ (pagination()?.total ?? quotations().length) === 1 ? 'quotation' : 'quotations' }}
+      </p>
+    </div>
+
+    <section class="quotation-list" aria-label="Your quotations" [attr.aria-busy]="isLoading()">
+      @for (quotation of quotations(); track quotation.quotation_id) {
+        <a class="quotation-card" [routerLink]="['/quotes', quotation.quotation_id]">
+          <div class="quotation-card__main">
+            <div class="quotation-card__identity">
+              <span class="quotation-id">
+                {{ quotation.quotation_id }}
+              </span>
+
+              <span class="quotation-date">
+                Created
+                {{ formatDate(quotation.quoted_on) }}
+              </span>
+            </div>
+
+            <div class="quotation-card__amount">
+              <strong>
+                {{ formatCurrency(quotation.total, quotation.currency_id) }}
+              </strong>
+
+              <span>
+                {{ quotation.currency_id }}
+              </span>
+            </div>
+          </div>
+
+          <div class="quotation-card__details">
+            <div class="detail-item">
+              <span class="detail-item__label"> Travel dates </span>
+
+              <strong>
+                {{ formatTripDates(quotation.start_date, quotation.end_date) }}
+              </strong>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-item__label"> Duration </span>
+
+              <strong>
+                {{ quotation.trip_days }}
+                {{ quotation.trip_days === 1 ? 'day' : 'days' }}
+              </strong>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-item__label"> Travelers </span>
+
+              <strong>
+                {{ travelerCountLabel(quotation.travelers_count) }}
+              </strong>
+            </div>
+
+            <span class="quotation-card__arrow" aria-hidden="true"> → </span>
+          </div>
+        </a>
+      }
+    </section>
+
+    @if (pagination() !== null && pagination()!.last_page > 1) {
+      <nav class="pagination" aria-label="Quotation pages">
+        <button
+          type="button"
+          [disabled]="pagination()!.current_page <= 1 || isLoading()"
+          (click)="previousPage()"
+        >
+          <span aria-hidden="true">←</span>
+          Previous
+        </button>
+
+        <span>
+          Page
+          <strong>
+            {{ pagination()!.current_page }}
+          </strong>
+          of
+          <strong>
+            {{ pagination()!.last_page }}
+          </strong>
+        </span>
+
+        <button
+          type="button"
+          [disabled]="pagination()!.current_page >= pagination()!.last_page || isLoading()"
+          (click)="nextPage()"
+        >
+          Next
+          <span aria-hidden="true">→</span>
+        </button>
+      </nav>
+    }
+  }
+</section>

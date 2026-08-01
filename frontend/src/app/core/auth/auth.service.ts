@@ -26,7 +26,7 @@ export class AuthService {
 
   login(request: LoginRequest): Observable<AuthResponse> {
     return this.authApi.login(request).pipe(
-      tap((response) => {
+      tap((response: AuthResponse) => {
         this.startSession(response);
       }),
     );
@@ -34,7 +34,7 @@ export class AuthService {
 
   register(request: RegisterRequest): Observable<AuthResponse> {
     return this.authApi.register(request).pipe(
-      tap((response) => {
+      tap((response: AuthResponse) => {
         this.startSession(response);
       }),
     );

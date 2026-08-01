@@ -14,14 +14,19 @@ import {
 })
 export class QuotationApiService {
   private readonly http = inject(HttpClient);
+
   private readonly baseUrl = environment.apiUrl;
 
   create(request: CreateQuotationRequest): Observable<Quotation> {
     return this.http.post<Quotation>(`${this.baseUrl}/quotation`, request);
   }
 
-  list(): Observable<QuotationListResponse> {
-    return this.http.get<QuotationListResponse>(`${this.baseUrl}/quotations`);
+  list(page: number = 1): Observable<QuotationListResponse> {
+    return this.http.get<QuotationListResponse>(`${this.baseUrl}/quotations`, {
+      params: {
+        page: page.toString(),
+      },
+    });
   }
 
   get(quotationId: string): Observable<Quotation> {
