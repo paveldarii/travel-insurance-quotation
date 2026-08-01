@@ -13,15 +13,13 @@ use Brick\Math\RoundingMode;
 use Carbon\CarbonImmutable;
 use DomainException;
 
-final readonly class QuotationCalculator
+final class QuotationCalculator
 {
-    private const FIXED_DAILY_RATE_BASE_MINOR = 300;
-
-    private const BASIS_POINT_DIVISOR = 10_000;
+    private const int BASIS_POINTS_DIVISOR = 10_000;
 
     public function __construct(
-        private TravelerAgeResolver $ageResolver,
-        private AgeLoadResolver $ageLoadResolver,
+        private readonly TravelerAgeResolver $ageResolver,
+        private readonly AgeLoadResolver $ageLoadResolver,
     ) {}
 
     /**
@@ -35,17 +33,33 @@ final readonly class QuotationCalculator
     ): QuotationCalculation {
         if ($travelers === []) {
             throw new DomainException(
-                'At least one traveler is required.'
+                'At least one traveler is required.',
             );
         }
 
-        if ($endDate->isBefore($startDate)) {
+        if ($endDate->lessThan($startDate)) {
             throw new DomainException(
-                'The trip end date cannot be before the start date.'
+                'The trip end date cannot precede the start date.',
             );
         }
 
-        $tripDays = (int) $startDate->diffInDays($endDate) + 1;
+        /*
+         * Carbon may return the date difference as a float.
+         * Brick Math accepts only int, string, or BigNumber,
+         * so the value must be converted explicitly.
+         */
+        $tripDays = (int) $startDate->diffInDays(
+            $endDate,
+            absolute: true,
+        );
+
+        /*
+         * Both the start date and end date are included.
+         */
+        $tripDays++;
+
+        $fixedDailyRateBaseMinor =
+            $this->fixedDailyRateBaseMinor();
 
         $travelerCalculations = [];
         $totalBaseMinor = 0;
@@ -57,30 +71,56 @@ final readonly class QuotationCalculator
                 $startDate,
             );
 
-            $loadBasisPoints = $this->ageLoadResolver
+            $ageLoadBasisPoints = (int) $this
+                ->ageLoadResolver
                 ->resolveBasisPoints($age);
 
-            $subtotalBaseMinor = $this->calculateBaseSubtotalMinor(
-                loadBasisPoints: $loadBasisPoints,
-                tripDays: $tripDays,
-            );
+            /*
+             * Base subtotal:
+             *
+             * fixed daily rate
+             * × inclusive trip days
+             * × age-load basis points
+             * ÷ 10,000
+             */
+            $subtotalBaseMinor = BigDecimal::of(
+                $fixedDailyRateBaseMinor,
+            )
+                ->multipliedBy($tripDays)
+                ->multipliedBy($ageLoadBasisPoints)
+                ->dividedBy(
+                    self::BASIS_POINTS_DIVISOR,
+                    0,
+                    RoundingMode::HalfUp,
+                )
+                ->toInt();
 
-            $subtotalMinor = $this->convertMinorUnits(
-                baseMinor: $subtotalBaseMinor,
-                rate: $exchangeRate->rate,
-            );
+            /*
+             * Convert the base-currency subtotal into
+             * the requested currency.
+             */
+            $subtotalMinor = BigDecimal::of(
+                $subtotalBaseMinor,
+            )
+                ->multipliedBy($exchangeRate->rate)
+                ->toScale(
+                    0,
+                    RoundingMode::HalfUp,
+                )
+                ->toInt();
+
+            $travelerCalculations[] =
+                new TravelerCalculation(
+                    fullName: $traveler->fullName,
+                    dateOfBirth: $traveler->dateOfBirth,
+                    ageAtTripStart: $age,
+                    ageLoadBasisPoints: $ageLoadBasisPoints,
+                    subtotalBaseMinor: $subtotalBaseMinor,
+                    subtotalMinor: $subtotalMinor,
+                );
 
             $totalBaseMinor += $subtotalBaseMinor;
             $totalMinor += $subtotalMinor;
-
-            $travelerCalculations[] = new TravelerCalculation(
-                fullName: $traveler->fullName,
-                dateOfBirth: $traveler->dateOfBirth,
-                ageAtTripStart: $age,
-                ageLoadBasisPoints: $loadBasisPoints,
-                subtotalBaseMinor: $subtotalBaseMinor,
-                subtotalMinor: $subtotalMinor,
-            );
         }
 
         return new QuotationCalculation(
@@ -93,33 +133,16 @@ final readonly class QuotationCalculator
 
     public function fixedDailyRateBaseMinor(): int
     {
-        return self::FIXED_DAILY_RATE_BASE_MINOR;
-    }
-
-    private function calculateBaseSubtotalMinor(
-        int $loadBasisPoints,
-        int $tripDays,
-    ): int {
-        $numerator = self::FIXED_DAILY_RATE_BASE_MINOR
-            * $loadBasisPoints
-            * $tripDays;
-
-        return intdiv(
-            $numerator,
-            self::BASIS_POINT_DIVISOR,
+        $rate = config(
+            'quotation.fixed_daily_rate_minor',
         );
-    }
 
-    private function convertMinorUnits(
-        int $baseMinor,
-        string $rate,
-    ): int {
-        return BigDecimal::of($baseMinor)
-            ->multipliedBy($rate)
-            ->toScale(
-                scale: 0,
-                roundingMode: RoundingMode::HalfUp,
-            )
-            ->toInt();
+        if (! is_int($rate) || $rate <= 0) {
+            throw new DomainException(
+                'The quotation daily rate configuration is invalid.',
+            );
+        }
+
+        return $rate;
     }
 }

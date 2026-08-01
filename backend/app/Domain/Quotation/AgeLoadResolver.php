@@ -10,16 +10,41 @@ final class AgeLoadResolver
 {
     public function resolveBasisPoints(int $age): int
     {
-        return match (true) {
-            $age >= 18 && $age <= 30 => 6_000,
-            $age >= 31 && $age <= 40 => 7_000,
-            $age >= 41 && $age <= 50 => 8_000,
-            $age >= 51 && $age <= 60 => 9_000,
-            $age >= 61 && $age <= 70 => 10_000,
+        $ageLoads = config('quotation.age_loads');
 
-            default => throw new DomainException(
-                'The traveler must be between 18 and 70 years old at the trip start date.'
-            ),
-        };
+        if (! is_array($ageLoads)) {
+            throw new DomainException(
+                'Quotation age-load configuration is invalid.',
+            );
+        }
+
+        foreach ($ageLoads as $ageLoad) {
+            if (! is_array($ageLoad)) {
+                continue;
+            }
+
+            $minimumAge = $ageLoad['minimum_age'] ?? null;
+            $maximumAge = $ageLoad['maximum_age'] ?? null;
+            $basisPoints = $ageLoad['basis_points'] ?? null;
+
+            if (
+                ! is_int($minimumAge)
+                || ! is_int($maximumAge)
+                || ! is_int($basisPoints)
+            ) {
+                continue;
+            }
+
+            if (
+                $age >= $minimumAge
+                && $age <= $maximumAge
+            ) {
+                return $basisPoints;
+            }
+        }
+
+        throw new DomainException(
+            "Traveler age {$age} is not eligible for quotation.",
+        );
     }
 }
