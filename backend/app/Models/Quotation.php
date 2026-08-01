@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use RuntimeException;
 
 #[Fillable([
     'user_id',
@@ -30,6 +31,16 @@ final class Quotation extends Model
     /** @use HasFactory<QuotationFactory> */
     use HasFactory;
 
+    private const int PUBLIC_ID_LENGTH = 8;
+
+    private const int PUBLIC_ID_GENERATION_ATTEMPTS = 10;
+
+    private const string PUBLIC_ID_ALPHABET =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+    /**
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [
@@ -45,6 +56,28 @@ final class Quotation extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::creating(
+            static function (Quotation $quotation): void {
+                if (
+                    is_string($quotation->public_id)
+                    && $quotation->public_id !== ''
+                ) {
+                    return;
+                }
+
+                $quotation->public_id =
+                    self::generateUniquePublicId();
+            }
+        );
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'public_id';
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -58,5 +91,44 @@ final class Quotation extends Model
     public function exchangeRate(): HasOne
     {
         return $this->hasOne(QuotationExchangeRate::class);
+    }
+
+    private static function generateUniquePublicId(): string
+    {
+        for (
+            $attempt = 1;
+            $attempt <= self::PUBLIC_ID_GENERATION_ATTEMPTS;
+            $attempt++
+        ) {
+            $publicId = self::generatePublicId();
+
+            $alreadyExists = self::query()
+                ->where('public_id', $publicId)
+                ->exists();
+
+            if (! $alreadyExists) {
+                return $publicId;
+            }
+        }
+
+        throw new RuntimeException(
+            'Unable to generate a unique quotation public ID.'
+        );
+    }
+
+    private static function generatePublicId(): string
+    {
+        $publicId = '';
+        $maximumIndex = strlen(self::PUBLIC_ID_ALPHABET) - 1;
+
+        for (
+            $position = 0;
+            $position < self::PUBLIC_ID_LENGTH;
+            $position++
+        ) {
+            $publicId .= self::PUBLIC_ID_ALPHABET[random_int(0, $maximumIndex)];
+        }
+
+        return $publicId;
     }
 }
