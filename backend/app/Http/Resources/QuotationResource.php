@@ -21,17 +21,14 @@ final class QuotationResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'quotation_id' => $this->public_id,
+
             'total' => $this->formatMinor(
                 $this->total_minor,
             ),
 
-            'currency_id' => $this->currency_code->value,
-
-            /*
-             * Expose the short public ID instead of the
-             * internal numeric primary key.
-             */
-            'quotation_id' => $this->public_id,
+            'currency_id' =>
+            $this->currency_code->value,
 
             'base_total' => $this->formatMinor(
                 $this->total_base_minor,
@@ -67,14 +64,13 @@ final class QuotationResource extends JsonResource
                     ->rate_date
                     ->toDateString(),
 
-                'rate' => $this->exchangeRate->rate,
+                'rate' =>
+                (string) $this->exchangeRate->rate,
             ],
 
             'travelers' => $this->travelers
                 ->map(
-                    fn(
-                        $traveler
-                    ): array => [
+                    fn($traveler): array => [
                         'full_name' =>
                         $traveler->full_name,
 
@@ -92,15 +88,16 @@ final class QuotationResource extends JsonResource
                             $traveler
                                 ->subtotal_minor,
                         ),
-                    ]
+                    ],
                 )
                 ->values()
                 ->all(),
         ];
     }
 
-    private function formatMinor(int $minor): string
-    {
+    private function formatMinor(
+        int $minor,
+    ): string {
         return number_format(
             $minor / 100,
             2,

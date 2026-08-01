@@ -65,7 +65,7 @@ final class AuthController extends Controller
                 $token = JWTAuth::fromUser($user);
 
                 return [$user, $token];
-            }
+            },
         );
 
         return $this->tokenResponse(
@@ -83,7 +83,7 @@ final class AuthController extends Controller
 
         if (! $guard instanceof JWTGuard) {
             throw new RuntimeException(
-                'The API authentication guard is not configured as a JWT guard.'
+                'The API authentication guard is not configured as a JWT guard.',
             );
         }
 
@@ -99,7 +99,7 @@ final class AuthController extends Controller
 
         if (! $user instanceof User) {
             throw new RuntimeException(
-                'The authenticated user could not be resolved.'
+                'The authenticated user could not be resolved.',
             );
         }
 
@@ -107,6 +107,27 @@ final class AuthController extends Controller
             user: $user,
             token: $token,
         );
+    }
+
+    public function me(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user instanceof User) {
+            throw new RuntimeException(
+                'The authenticated user could not be resolved.',
+            );
+        }
+
+        return response()->json([
+            'data' => [
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ],
+            ],
+        ]);
     }
 
     private function tokenResponse(

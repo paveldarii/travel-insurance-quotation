@@ -1,1 +1,236 @@
-<p>quotation-detail works!</p>
+<section class="page">
+  <header class="page-navigation">
+    <a class="back-link" routerLink="/quotes">
+      <span aria-hidden="true">←</span>
+      Back to quotations
+    </a>
+
+    <button type="button" class="secondary-button" (click)="createAnotherQuotation()">
+      <span aria-hidden="true">+</span>
+      New quotation
+    </button>
+  </header>
+
+  @if (isLoading()) {
+    <section class="loading-state" aria-busy="true" aria-label="Loading quotation">
+      <div class="skeleton skeleton--heading"></div>
+      <div class="skeleton skeleton--amount"></div>
+
+      <div class="skeleton-card">
+        <div class="skeleton skeleton--line"></div>
+        <div class="skeleton skeleton--line-short"></div>
+      </div>
+
+      <div class="skeleton-card">
+        <div class="skeleton skeleton--line"></div>
+        <div class="skeleton skeleton--line-short"></div>
+      </div>
+    </section>
+  } @else if (errorMessage()) {
+    <section class="error-state" role="alert">
+      <div class="error-state__icon" aria-hidden="true">
+        {{ notFound() ? '?' : '!' }}
+      </div>
+
+      <h1>
+        {{ notFound() ? 'Quotation not found' : 'Unable to load quotation' }}
+      </h1>
+
+      <p>{{ errorMessage() }}</p>
+
+      <div class="error-state__actions">
+        <a class="secondary-button" routerLink="/quotes"> View all quotations </a>
+
+        @if (!notFound()) {
+          <button type="button" class="primary-button" (click)="loadQuotation()">Try again</button>
+        }
+      </div>
+    </section>
+  } @else if (quotation(); as quote) {
+    <article class="quotation">
+      <header class="quotation-hero">
+        <div>
+          <p class="quotation-hero__eyebrow">Quotation</p>
+
+          <div class="quotation-hero__title">
+            <h1>{{ quote.quotation_id }}</h1>
+
+            <span class="status-badge"> Calculated </span>
+          </div>
+
+          <p class="quotation-hero__date">
+            Created
+            {{ formatDate(quote.quoted_on) }}
+          </p>
+        </div>
+
+        <div class="quotation-total">
+          <span>Total quotation</span>
+
+          <strong>
+            {{ formatCurrency(quote.total, quote.currency_id) }}
+          </strong>
+
+          <small> Payable in {{ quote.currency_id }} </small>
+        </div>
+      </header>
+
+      <section class="summary-grid" aria-label="Quotation summary">
+        <article class="summary-card">
+          <span class="summary-card__label"> Trip dates </span>
+
+          <strong>
+            {{ formatDate(quote.start_date) }}
+          </strong>
+
+          <span> to {{ formatDate(quote.end_date) }} </span>
+        </article>
+
+        <article class="summary-card">
+          <span class="summary-card__label"> Duration </span>
+
+          <strong>
+            {{ quote.trip_days }}
+            {{ quote.trip_days === 1 ? 'day' : 'days' }}
+          </strong>
+
+          <span> Start and end dates included </span>
+        </article>
+
+        <article class="summary-card">
+          <span class="summary-card__label"> Travelers </span>
+
+          <strong>
+            {{ travelerCountLabel(quote.travelers.length) }}
+          </strong>
+
+          <span> Included in this quotation </span>
+        </article>
+
+        <article class="summary-card">
+          <span class="summary-card__label"> Currency </span>
+
+          <strong>
+            {{ quote.currency_id }}
+          </strong>
+
+          <span>
+            Base currency:
+            {{ quote.base_currency_id }}
+          </span>
+        </article>
+      </section>
+
+      <section class="content-card">
+        <header class="content-card__header">
+          <div>
+            <p class="section-eyebrow">Covered travelers</p>
+
+            <h2>Traveler breakdown</h2>
+          </div>
+
+          <span class="content-card__count">
+            {{ travelerCountLabel(quote.travelers.length) }}
+          </span>
+        </header>
+
+        <div class="traveler-list">
+          @for (
+            traveler of quote.travelers;
+            track traveler.full_name + traveler.date_of_birth;
+            let index = $index
+          ) {
+            <article class="traveler-row">
+              <div class="traveler-avatar" aria-hidden="true">
+                {{ index + 1 }}
+              </div>
+
+              <div class="traveler-identity">
+                <strong>
+                  {{ traveler.full_name }}
+                </strong>
+
+                <span>
+                  Born
+                  {{ formatDate(traveler.date_of_birth) }}
+                </span>
+              </div>
+
+              <div class="traveler-age">
+                <span>Age at departure</span>
+
+                <strong>
+                  {{ traveler.age_at_trip_start }}
+                </strong>
+              </div>
+
+              <div class="traveler-price">
+                <span>Subtotal</span>
+
+                <strong>
+                  {{ formatCurrency(traveler.subtotal, quote.currency_id) }}
+                </strong>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+
+      <section class="content-card">
+        <header class="content-card__header">
+          <div>
+            <p class="section-eyebrow">Currency details</p>
+
+            <h2>Exchange rate</h2>
+          </div>
+        </header>
+
+        <div class="exchange-rate">
+          <div class="exchange-rate__currency">
+            <span>Base currency</span>
+
+            <strong>
+              {{ quote.exchange_rate.base_currency_id }}
+            </strong>
+          </div>
+
+          <span class="exchange-rate__arrow" aria-hidden="true"> → </span>
+
+          <div class="exchange-rate__currency">
+            <span>Payment currency</span>
+
+            <strong>
+              {{ quote.exchange_rate.quote_currency_id }}
+            </strong>
+          </div>
+
+          <div class="exchange-rate__value">
+            <span>Applied rate</span>
+
+            <strong>
+              {{ quote.exchange_rate.rate }}
+            </strong>
+
+            <small>
+              Rate date:
+              {{ formatDate(quote.exchange_rate.rate_date) }}
+            </small>
+          </div>
+        </div>
+      </section>
+
+      <footer class="quotation-footer">
+        <div>
+          <strong>Need another quotation?</strong>
+
+          <span> Start a new request with different travelers, dates, or currency. </span>
+        </div>
+
+        <button type="button" class="primary-button" (click)="createAnotherQuotation()">
+          Create another quotation
+          <span aria-hidden="true">→</span>
+        </button>
+      </footer>
+    </article>
+  }
+</section>

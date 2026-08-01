@@ -21,7 +21,7 @@ export class QuotationApiService {
     return this.http.post<Quotation>(`${this.baseUrl}/quotation`, request);
   }
 
-  list(page: number = 1): Observable<QuotationListResponse> {
+  list(page = 1): Observable<QuotationListResponse> {
     return this.http.get<QuotationListResponse>(`${this.baseUrl}/quotations`, {
       params: {
         page: page.toString(),
@@ -30,8 +30,8 @@ export class QuotationApiService {
   }
 
   get(quotationId: string): Observable<Quotation> {
-    return this.http.get<Quotation>(
-      `${this.baseUrl}/quotations/${encodeURIComponent(quotationId)}`,
-    );
+    const encodedQuotationId = encodeURIComponent(quotationId.toUpperCase());
+
+    return this.http.get<Quotation>(`${this.baseUrl}/quotations/${encodedQuotationId}`);
   }
 }
