@@ -48,6 +48,7 @@ export interface QuotationSummary {
   readonly start_date: string;
   readonly end_date: string;
   readonly trip_days: number;
+  readonly travelers_count: number;
 }
 
 export interface QuotationListResponse {

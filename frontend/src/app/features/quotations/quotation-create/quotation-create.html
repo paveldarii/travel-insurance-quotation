@@ -1,1 +1,262 @@
-<p>quotation-create works!</p>
+<section class="page">
+  <header class="page-header">
+    <div>
+      <a class="back-link" routerLink="/quotes">
+        <span aria-hidden="true">←</span>
+        My quotations
+      </a>
+
+      <p class="page-header__eyebrow">New quotation</p>
+
+      <h1>Plan your trip</h1>
+
+      <p class="page-header__description">
+        Add your travel dates, preferred currency, and traveler information.
+      </p>
+    </div>
+
+    <div class="security-note" aria-label="Secure quotation">
+      <span class="security-note__icon" aria-hidden="true"> ✓ </span>
+
+      <span> Your information is sent securely </span>
+    </div>
+  </header>
+
+  @if (serverError()) {
+    <div class="alert alert--error" role="alert">
+      <strong>Unable to continue</strong>
+      <span>{{ serverError() }}</span>
+    </div>
+  }
+
+  <form class="quotation-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <section class="form-card">
+      <header class="form-card__header">
+        <span class="step-number" aria-hidden="true"> 1 </span>
+
+        <div>
+          <h2>Trip details</h2>
+
+          <p>Tell us when you are traveling and how you would like to pay.</p>
+        </div>
+      </header>
+
+      <div class="trip-grid">
+        <div class="form-field currency-field">
+          <label for="currency"> Payment currency </label>
+
+          <select
+            id="currency"
+            formControlName="currency_id"
+            [attr.aria-invalid]="
+              form.controls.currency_id.invalid && form.controls.currency_id.touched
+            "
+          >
+            @for (currency of currencies; track currency.code) {
+              <option [value]="currency.code">
+                {{ currency.symbol }}
+                {{ currency.code }} —
+                {{ currency.name }}
+              </option>
+            }
+          </select>
+
+          @if (backendError(form.controls.currency_id)) {
+            <p class="field-error">
+              {{ backendError(form.controls.currency_id) }}
+            </p>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="start-date"> Trip start date </label>
+
+          <input
+            id="start-date"
+            type="date"
+            formControlName="start_date"
+            [attr.aria-invalid]="
+              form.controls.start_date.invalid && form.controls.start_date.touched
+            "
+            aria-describedby="start-date-error"
+          />
+
+          <div id="start-date-error" class="field-error" aria-live="polite">
+            @if (fieldHasError(form.controls.start_date, 'required')) {
+              Trip start date is required.
+            } @else if (backendError(form.controls.start_date)) {
+              {{ backendError(form.controls.start_date) }}
+            }
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="end-date"> Trip end date </label>
+
+          <input
+            id="end-date"
+            type="date"
+            formControlName="end_date"
+            [attr.aria-invalid]="
+              (form.controls.end_date.invalid || dateRangeHasError()) &&
+              form.controls.end_date.touched
+            "
+            aria-describedby="end-date-error"
+          />
+
+          <div id="end-date-error" class="field-error" aria-live="polite">
+            @if (fieldHasError(form.controls.end_date, 'required')) {
+              Trip end date is required.
+            } @else if (dateRangeHasError()) {
+              End date cannot be before the start date.
+            } @else if (backendError(form.controls.end_date)) {
+              {{ backendError(form.controls.end_date) }}
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="form-card">
+      <header class="form-card__header travelers-header">
+        <div class="form-card__title">
+          <span class="step-number" aria-hidden="true"> 2 </span>
+
+          <div>
+            <h2>Travelers</h2>
+
+            <p>Add everyone who will be covered by this quotation.</p>
+          </div>
+        </div>
+
+        <button class="secondary-button" type="button" (click)="addTraveler()">
+          <span aria-hidden="true">+</span>
+          Add traveler
+        </button>
+      </header>
+
+      <div class="travelers-list" formArrayName="travelers">
+        @for (traveler of travelers.controls; track traveler; let index = $index) {
+          <article class="traveler-card" [formGroupName]="index">
+            <header class="traveler-card__header">
+              <div class="traveler-title">
+                <span class="traveler-avatar" aria-hidden="true">
+                  {{ index + 1 }}
+                </span>
+
+                <div>
+                  <h3>
+                    {{ travelerLabel(index) }}
+                  </h3>
+
+                  <p>Enter the traveler’s legal name and date of birth.</p>
+                </div>
+              </div>
+
+              <button
+                class="remove-button"
+                type="button"
+                [disabled]="travelers.length <= 1"
+                [attr.aria-label]="'Remove ' + travelerLabel(index)"
+                (click)="removeTraveler(index)"
+              >
+                Remove
+              </button>
+            </header>
+
+            <div class="traveler-grid">
+              <div class="form-field">
+                <label [for]="'traveler-name-' + index"> Full name </label>
+
+                <input
+                  [id]="'traveler-name-' + index"
+                  type="text"
+                  formControlName="full_name"
+                  autocomplete="name"
+                  placeholder="Enter full legal name"
+                  [attr.aria-invalid]="
+                    traveler.controls.full_name.invalid && traveler.controls.full_name.touched
+                  "
+                  [attr.aria-describedby]="'traveler-name-error-' + index"
+                />
+
+                <div [id]="'traveler-name-error-' + index" class="field-error" aria-live="polite">
+                  @if (fieldHasError(traveler.controls.full_name, 'required')) {
+                    Full name is required.
+                  } @else if (fieldHasError(traveler.controls.full_name, 'minlength')) {
+                    Enter at least two characters.
+                  } @else if (fieldHasError(traveler.controls.full_name, 'maxlength')) {
+                    Full name cannot exceed 120 characters.
+                  } @else if (backendError(traveler.controls.full_name)) {
+                    {{ backendError(traveler.controls.full_name) }}
+                  }
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label [for]="'traveler-birth-date-' + index"> Date of birth </label>
+
+                <input
+                  [id]="'traveler-birth-date-' + index"
+                  type="date"
+                  formControlName="date_of_birth"
+                  autocomplete="bday"
+                  [attr.aria-invalid]="
+                    (traveler.controls.date_of_birth.invalid || travelerAgeError(index)) &&
+                    traveler.controls.date_of_birth.touched
+                  "
+                  [attr.aria-describedby]="'traveler-birth-error-' + index"
+                />
+
+                <div [id]="'traveler-birth-error-' + index" class="field-error" aria-live="polite">
+                  @if (fieldHasError(traveler.controls.date_of_birth, 'required')) {
+                    Date of birth is required.
+                  } @else if (travelerAgeError(index)) {
+                    {{ travelerAgeError(index) }}
+                  } @else if (backendError(traveler.controls.date_of_birth)) {
+                    {{ backendError(traveler.controls.date_of_birth) }}
+                  }
+                </div>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+
+      <button class="add-traveler-mobile" type="button" (click)="addTraveler()">
+        <span aria-hidden="true">+</span>
+        Add another traveler
+      </button>
+    </section>
+
+    <footer class="form-actions">
+      <div class="form-actions__summary">
+        <strong>
+          {{ travelers.length }}
+          {{ travelers.length === 1 ? 'traveler' : 'travelers' }}
+        </strong>
+
+        <span> You will review the calculated price after submission. </span>
+      </div>
+
+      <div class="form-actions__buttons">
+        <a class="cancel-button" routerLink="/quotes"> Cancel </a>
+
+        <button
+          class="primary-button"
+          type="submit"
+          [disabled]="form.invalid || travelers.length === 0 || isSubmitting()"
+        >
+          @if (isSubmitting()) {
+            <span class="button-spinner" aria-hidden="true"></span>
+
+            Creating quotation…
+          } @else {
+            Get quotation
+            <span aria-hidden="true">→</span>
+          }
+        </button>
+      </div>
+    </footer>
+  </form>
+</section>
