@@ -4,16 +4,16 @@ export interface User {
   readonly email: string;
 }
 
+export interface LoginRequest {
+  readonly email: string;
+  readonly password: string;
+}
+
 export interface RegisterRequest {
   readonly name: string;
   readonly email: string;
   readonly password: string;
   readonly password_confirmation: string;
-}
-
-export interface LoginRequest {
-  readonly email: string;
-  readonly password: string;
 }
 
 export interface AuthData {
@@ -25,4 +25,9 @@ export interface AuthData {
 
 export interface AuthResponse {
   readonly data: AuthData;
+}
+
+export interface ApiErrorResponse {
+  readonly message: string;
+  readonly errors?: Readonly<Record<string, readonly string[]>>;
 }

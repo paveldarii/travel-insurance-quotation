@@ -1,1 +1,41 @@
-<p>auth-layout works!</p>
+<main class="auth-layout">
+  <section class="auth-layout__brand">
+    <div class="brand">
+      <span class="brand__mark" aria-hidden="true"> I </span>
+
+      <span class="brand__name"> InsuranceOne </span>
+    </div>
+
+    <div class="brand-message">
+      <span class="brand-message__eyebrow"> Travel with confidence </span>
+
+      <h2>A simple way to prepare for your next trip.</h2>
+
+      <p>
+        Create travel insurance quotations, compare currencies, and keep every quote in one secure
+        place.
+      </p>
+
+      <div class="brand-points">
+        <div class="brand-point">
+          <span aria-hidden="true">✓</span>
+          Fast quotation process
+        </div>
+
+        <div class="brand-point">
+          <span aria-hidden="true">✓</span>
+          Multiple travelers
+        </div>
+
+        <div class="brand-point">
+          <span aria-hidden="true">✓</span>
+          EUR, USD, and GBP support
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="auth-layout__content">
+    <router-outlet />
+  </section>
+</main>

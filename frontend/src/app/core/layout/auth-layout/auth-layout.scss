@@ -1,0 +1,146 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+}
+
+.auth-layout {
+  display: grid;
+  min-height: 100dvh;
+  grid-template-columns:
+    minmax(20rem, 0.9fr)
+    minmax(28rem, 1.1fr);
+  background: #f8fafc;
+}
+
+.auth-layout__brand {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(2rem, 5vw, 4.5rem);
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 20% 15%,
+      rgba(129, 140, 248, 0.35),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 90% 90%,
+      rgba(56, 189, 248, 0.18),
+      transparent 34%
+    ),
+    linear-gradient(145deg, #111827, #312e81);
+  color: #fff;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.brand__mark {
+  display: grid;
+  width: 2.3rem;
+  height: 2.3rem;
+  place-items: center;
+  border-radius: 0.75rem;
+  background: #fff;
+  color: #312e81;
+  font-size: 1.1rem;
+  font-weight: 850;
+}
+
+.brand__name {
+  font-size: 1.12rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.brand-message {
+  max-width: 34rem;
+  margin: auto 0;
+
+  h2 {
+    margin: 0.75rem 0 1rem;
+    font-size: clamp(2.3rem, 5vw, 4.1rem);
+    line-height: 1.03;
+    letter-spacing: -0.055em;
+  }
+
+  p {
+    max-width: 31rem;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 1.03rem;
+    line-height: 1.75;
+  }
+}
+
+.brand-message__eyebrow {
+  color: #c7d2fe;
+  font-size: 0.8rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.brand-points {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 2rem;
+}
+
+.brand-point {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.92rem;
+
+  span {
+    display: grid;
+    width: 1.5rem;
+    height: 1.5rem;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.13);
+    color: #c7d2fe;
+  }
+}
+
+.auth-layout__content {
+  display: grid;
+  min-width: 0;
+  place-items: center;
+  padding: clamp(1rem, 5vw, 4rem);
+  background:
+    radial-gradient(
+      circle at 80% 10%,
+      rgba(99, 102, 241, 0.08),
+      transparent 28rem
+    ),
+    #f8fafc;
+}
+
+@media (max-width: 860px) {
+  .auth-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-layout__brand {
+    min-height: auto;
+    padding: 1.25rem;
+  }
+
+  .brand-message {
+    display: none;
+  }
+
+  .auth-layout__content {
+    min-height: calc(100dvh - 4.8rem);
+    align-items: start;
+    padding: 1rem;
+  }
+}
